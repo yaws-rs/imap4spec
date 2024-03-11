@@ -4,7 +4,7 @@ pub enum ContextError {}
 
 #[derive(Debug, Default)]
 pub struct IMAP4rev2Context {
-    pub rfc_state: crate::state::IMAP4rev2State,
+    pub(crate) rfc_state: crate::state::IMAP4rev2State,
 }
 
 impl IMAP4rev2Context {
@@ -15,6 +15,10 @@ impl IMAP4rev2Context {
         crate::request_response::Response::scan_with_context(self, input);
         Ok(())
     }
+    pub fn try_next_request(self: &mut Self, input: &str) -> Result<(), ContextError> {
+        crate::request_response::Request::scan_with_context(self, input);
+        Ok(())
+    }    
 }
 
 #[cfg(test)]

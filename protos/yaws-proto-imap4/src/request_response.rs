@@ -17,8 +17,11 @@ pub struct Request<'a> {
     pub raw: &'a str,
 }
 
+pub enum ScanResponseError {
+}
+
 impl Response<'_> {
-    pub fn scan_with_context(ctx: &mut IMAP4rev2Context, s: &str) {
+    pub fn scan_with_context(ctx: &mut IMAP4rev2Context, s: &str) -> Result<(), ScanResponseError> {
         match ctx.rfc_state {
             IMAP4rev2State::NotAuthenticated => {}
             IMAP4rev2State::Authenticated => {}
@@ -26,11 +29,15 @@ impl Response<'_> {
             IMAP4rev2State::Logout => {}
             IMAP4rev2State::Idle => {}
         }
+        Ok(())
     }
 }
 
+pub enum ScanRequestError {
+}
+
 impl Request<'_> {
-    pub fn scan_with_context(ctx: IMAP4rev2Context, s: &str) {
+    pub fn scan_with_context(ctx: &mut IMAP4rev2Context, s: &str) -> Result<(), ScanRequestError> {
         match ctx.rfc_state {
             IMAP4rev2State::NotAuthenticated => {}
             IMAP4rev2State::Authenticated => {}
@@ -38,5 +45,6 @@ impl Request<'_> {
             IMAP4rev2State::Logout => {}
             IMAP4rev2State::Idle => {}
         }
+        Ok(())
     }
 }

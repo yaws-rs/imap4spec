@@ -10,9 +10,8 @@ IANA Capabilities Registry
 
 | RFC    | Description | Done? |
 | :---   | :---        | :---  |
-| [3501](https://www.rfc-editor.org/rfc/rfc3501)        | 2003 IMAP 4rev1  | :womand_shrugging: |
-| [9051](https://datatracker.ietf.org/doc/html/rfc9051) | 2021 IMAP 4rev2  | :womand_shrugging: |
-|
+| [3501](https://www.rfc-editor.org/rfc/rfc3501)        | 2003 IMAP 4rev1  | :woman_shrugging: |
+| [9051](https://datatracker.ietf.org/doc/html/rfc9051) | 2021 IMAP 4rev2  | :woman_shrugging: |
 
 ## Extensions
 
