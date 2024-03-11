@@ -1,2 +1,1 @@
-pub struct Authenticate {
-}
+pub struct Authenticate {}

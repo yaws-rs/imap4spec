@@ -1,2 +1,1 @@
-pub struct Logout {
-}
+pub struct Logout {}

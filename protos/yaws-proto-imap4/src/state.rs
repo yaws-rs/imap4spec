@@ -1,7 +1,6 @@
 //! Client States per RFC 9051
 //! This is different from protocol states e.g. IDLE etc.
 
-
 /// IMAPrev2 rfc9051 section 3
 /// https://datatracker.ietf.org/doc/html/rfc9051#name-state-and-flow-diagram
 #[derive(Debug, Default, Eq, PartialEq)]
@@ -15,7 +14,7 @@ pub enum IMAP4rev2State {
     Selected,
     /// IMAP4rev2 s.3.4
     Logout,
-    /// IMAP4rev2 s.6.3.13 - extension 
+    /// IMAP4rev2 s.6.3.13 - extension
     Idle,
 }
 
@@ -37,7 +36,7 @@ pub mod universal {
 /// IMAP4rev2 s. 6.2 - Not authenticated state by Client
 pub mod not_authenticated {
     /// Available upon Not Authenticated state
-    #[derive(Debug)]    
+    #[derive(Debug)]
     pub enum IMAP4rev2Command {
         Universal(super::universal::IMAP4rev2Command),
         /// s.6.2.1 - STARTTLS
@@ -54,7 +53,7 @@ pub mod not_authenticated {
 /// IMAP4rev2 s. 6.3 - Authenticated State
 pub mod authenticated {
     /// Available upon Authenticated state
-    #[derive(Debug)]    
+    #[derive(Debug)]
     pub enum IMAP4rev2Command {
         Universal(super::universal::IMAP4rev2Command),
         /// s.6.3.1 - an explicit indication supporting particular extensions

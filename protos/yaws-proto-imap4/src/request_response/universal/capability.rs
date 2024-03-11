@@ -1,2 +1,1 @@
-pub struct Capability {
-}
+pub struct Capability {}

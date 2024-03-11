@@ -1,10 +1,8 @@
 #[allow(non_camel_case_types)]
-trait IMAP4rev2Request {
-}
+trait IMAP4rev2Request {}
 
 #[allow(non_camel_case_types)]
-trait IMAP4rev2Response {
-}
+trait IMAP4rev2Response {}
 
 #[allow(non_camel_case_types)]
 pub trait IMAP4rev2Client_Universal {

@@ -1,2 +1,1 @@
-pub struct Login {
-}
+pub struct Login {}

@@ -1,2 +1,1 @@
-pub struct Noop {
-}
+pub struct Noop {}

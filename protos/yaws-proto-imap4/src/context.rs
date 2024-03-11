@@ -1,13 +1,10 @@
 //! IMAP Context
 
-pub enum ContextError {
-    
-}
+pub enum ContextError {}
 
 #[derive(Debug, Default)]
 pub struct IMAP4rev2Context {
     pub rfc_state: crate::state::IMAP4rev2State,
-    
 }
 
 impl IMAP4rev2Context {
@@ -20,13 +17,12 @@ impl IMAP4rev2Context {
     }
 }
 
-
 #[cfg(test)]
 mod test {
 
     use super::IMAP4rev2Context;
     use crate::state::IMAP4rev2State;
-    
+
     #[test]
     fn defaults() {
         let s = IMAP4rev2Context::new();
