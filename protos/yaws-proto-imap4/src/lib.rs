@@ -17,4 +17,3 @@ mod traits;
 pub use context::IMAP4rev2Context;
 pub use request_response::{Request, Response};
 pub use state::IMAP4rev2State;
-

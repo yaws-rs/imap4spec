@@ -79,15 +79,14 @@ pub enum Capabilities {
 
 use core::str::FromStr;
 
-pub enum CapabilitiesParseError {
-}
+pub enum CapabilitiesParseError {}
 
 impl FromStr for Capabilities {
     type Err = CapabilitiesParseError;
-    
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            _ => todo!()
+            _ => todo!(),
         }
     }
 }

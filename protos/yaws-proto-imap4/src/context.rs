@@ -18,7 +18,7 @@ impl IMAP4rev2Context {
     pub fn try_next_request(self: &mut Self, input: &str) -> Result<(), ContextError> {
         crate::request_response::Request::scan_with_context(self, input);
         Ok(())
-    }    
+    }
 }
 
 #[cfg(test)]

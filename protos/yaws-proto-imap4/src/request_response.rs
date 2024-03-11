@@ -17,8 +17,7 @@ pub struct Request<'a> {
     pub raw: &'a str,
 }
 
-pub enum ScanResponseError {
-}
+pub enum ScanResponseError {}
 
 impl Response<'_> {
     pub fn scan_with_context(ctx: &mut IMAP4rev2Context, s: &str) -> Result<(), ScanResponseError> {
@@ -33,8 +32,7 @@ impl Response<'_> {
     }
 }
 
-pub enum ScanRequestError {
-}
+pub enum ScanRequestError {}
 
 impl Request<'_> {
     pub fn scan_with_context(ctx: &mut IMAP4rev2Context, s: &str) -> Result<(), ScanRequestError> {
