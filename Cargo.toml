@@ -1,0 +1,3 @@
+[workspace]
+members = ["protos/yaws-proto-imap4"]
+resolver = "2"
