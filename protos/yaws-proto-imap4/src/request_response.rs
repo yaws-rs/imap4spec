@@ -9,18 +9,21 @@ use crate::state::IMAP4rev2State;
 
 pub struct Response<'a> {
     pub id: &'a str,
-    pub raw: &'a str,
+    pub raw: &'a [u8],
 }
 
 pub struct Request<'a> {
     pub id: &'a str,
-    pub raw: &'a str,
+    pub raw: &'a [u8],
 }
 
 pub enum ScanResponseError {}
 
 impl Response<'_> {
-    pub fn scan_with_context(ctx: &mut IMAP4rev2Context, s: &str) -> Result<(), ScanResponseError> {
+    pub fn scan_with_context(
+        ctx: &mut IMAP4rev2Context,
+        s: &[u8],
+    ) -> Result<(), ScanResponseError> {
         match ctx.rfc_state {
             IMAP4rev2State::NotAuthenticated => {}
             IMAP4rev2State::Authenticated => {}
@@ -35,7 +38,7 @@ impl Response<'_> {
 pub enum ScanRequestError {}
 
 impl Request<'_> {
-    pub fn scan_with_context(ctx: &mut IMAP4rev2Context, s: &str) -> Result<(), ScanRequestError> {
+    pub fn scan_with_context(ctx: &mut IMAP4rev2Context, s: &[u8]) -> Result<(), ScanRequestError> {
         match ctx.rfc_state {
             IMAP4rev2State::NotAuthenticated => {}
             IMAP4rev2State::Authenticated => {}

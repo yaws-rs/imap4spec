@@ -1,0 +1,10 @@
+[package]
+name = "yaws-runner-client-imap4-tokio_uring"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+yaws-client-imap4 = { version = "0.1", path = "../../clients/yaws-client-imap4" }
+tokio-uring = "0.4"

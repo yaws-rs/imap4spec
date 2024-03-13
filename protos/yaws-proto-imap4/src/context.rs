@@ -103,12 +103,12 @@ impl IMAP4rev2Context {
         }
     }
     /// Try to extract next Response within the current Context
-    pub fn try_next_response(self: &mut Self, input: &str) -> Result<(), ContextError> {
+    pub fn try_next_response(self: &mut Self, input: &[u8]) -> Result<(), ContextError> {
         crate::request_response::Response::scan_with_context(self, input);
         todo!()
     }
     /// Try to extract next Request within the current Context    
-    pub fn try_next_request(self: &mut Self, input: &str) -> Result<(), ContextError> {
+    pub fn try_next_request(self: &mut Self, input: &[u8]) -> Result<(), ContextError> {
         crate::request_response::Request::scan_with_context(self, input);
         todo!()
     }

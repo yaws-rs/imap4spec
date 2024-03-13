@@ -1,12 +1,13 @@
 #![no_std]
 #![warn(
     clippy::unwrap_used,
-    missing_docs,
+    //missing_docs,
     rust_2018_idioms,
     unused_lifetimes,
     unused_qualifications
 )]
 #![doc = include_str!("../README.md")]
+#![allow(dead_code)] // HEAVY TODO
 
 mod capabilities;
 mod context;
