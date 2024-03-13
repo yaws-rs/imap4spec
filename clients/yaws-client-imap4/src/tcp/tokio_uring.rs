@@ -10,6 +10,7 @@ pub enum ReadError {}
 pub enum ClientError {
     Connect(String),
     BugTooBigRead,
+    Read(String),
 }
 
 impl core::fmt::Display for ClientError {
@@ -17,6 +18,7 @@ impl core::fmt::Display for ClientError {
         match self {
             Self::Connect(s) => write!(f, "Error - Connection: {}", s),
             Self::BugTooBigRead => write!(f, "Bug - Read Too Big Buffer ?!"),
+            Self::Read(s) => write!(f, "Error - Socket Read: {}", s),
         }
     }
 }
@@ -42,8 +44,9 @@ impl Client {
     }
     pub async fn read_next(mut self) -> Result<Self, ClientError> {
         let (res, buf) = self.client.read(self.buf_in).await;
-        let n = res.unwrap(); // LOL TODO
 
+        let n = res.map_err(|e| ClientError::Read(e.to_string()))?;
+        
         // How ?
         if n >= 8192 {
             return Err(ClientError::BugTooBigRead);
