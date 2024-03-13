@@ -6,3 +6,16 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+
+[features]
+default = []
+
+# By default state machine allows from rfc state
+# Below features adds pre-states e.g. from incomplete protocol captures
+
+imap4rev2_state_preauthenticated = []
+imap4rev2_state_preselected = []
+imap4rev2_state_prelogout = []
+imap4rev2_state_preidle = []
+
+imap4rev2_state_preall = ["imap4rev2_state_preauthenticated", "imap4rev2_state_preselected", "imap4rev2_state_prelogout", "imap4rev2_state_preidle"]

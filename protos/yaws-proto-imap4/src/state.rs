@@ -1,5 +1,4 @@
 //! Client States per RFC 9051
-//! This is different from protocol states e.g. IDLE etc.
 
 /// IMAPrev2 rfc9051 section 3
 /// https://datatracker.ietf.org/doc/html/rfc9051#name-state-and-flow-diagram
@@ -16,6 +15,34 @@ pub enum IMAP4rev2State {
     Logout,
     /// IMAP4rev2 s.6.3.13 - extension
     Idle,
+}
+
+/// State machine switch illegalities
+/// Note: NotAuthenticated has no Context accessor/s except new()
+#[derive(Debug, Eq, PartialEq)]
+#[allow(missing_docs)] // mentally read & validate as groupings
+pub enum IMAP4rev2StateIllegalSwitch {
+    // From NotAuthenticated it is illegal to switch to
+    // .. Leaving 2: Authenticated & Logout as allowed
+    SelectedFromNotAuthenticated,
+    IdleFromNotAuthenticated,
+    // From Authenticated it is illegal to switch to
+    // .. Leaving 3: Selected, Logout, Idle as allowed
+    AuthenticatedFromAuthenticated,
+    // From Selected it is illegal to switch to
+    // .. Leaving 3: Authenticated, Logout & Idle as allowed
+    SelectedFromSelected,
+    // From Logout it is illegal to switch to
+    // .. Leaving 0: None as allowed
+    AuthenticatedFromLogout,
+    SelectedFromLogout,
+    LogoutFromLogout,
+    IdleFromLogout,
+    // From Idle it is illegal to switch to
+    // .. Leaving 1: Authenticated as allowed
+    IdleFromIdle,
+    LogoutFromIdle,
+    SelectedFromIdle,
 }
 
 /// IMAP4rev2 s. 6.1 - Any state by Client

@@ -16,4 +16,4 @@ mod traits;
 
 pub use context::IMAP4rev2Context;
 pub use request_response::{Request, Response};
-pub use state::IMAP4rev2State;
+pub use state::{IMAP4rev2State, IMAP4rev2StateIllegalSwitch};
