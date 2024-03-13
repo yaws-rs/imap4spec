@@ -34,16 +34,18 @@ impl Client {
         let client = TcpStream::connect(dest_addr)
             .await
             .map_err(|e| ClientError::Connect(e.to_string()))?;
-        let buf_in = vec![0; 8192];
 
         Ok(Self {
-            buf_in,
+            buf_in: vec![],
             client,
             buf_size: 0,
         })
     }
-    pub async fn read_next(mut self) -> Result<Self, ClientError> {
-        let (res, buf) = self.client.read(self.buf_in).await;
+    pub async fn read_next(&mut self) -> Result<(), ClientError> {
+        
+        let buf_in = vec![0; 8192];
+        
+        let (res, buf) = self.client.read(buf_in).await;
 
         let n = res.map_err(|e| ClientError::Read(e.to_string()))?;
         
@@ -54,8 +56,8 @@ impl Client {
             self.buf_size = n as u16;
         }
 
-        self.buf_in = buf;
+        (*self).buf_in = buf;
 
-        Ok(self)
+        Ok(())
     }
 }

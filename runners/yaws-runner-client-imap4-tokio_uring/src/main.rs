@@ -4,10 +4,12 @@ fn main() {
     tokio_uring::start(async {
         let sockaddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 143);
 
-        let client = yaws_client_imap4::IMAP4rev2Client::connect(sockaddr)
+        let mut client = yaws_client_imap4::IMAP4rev2Client::connect(sockaddr)
             .await
             .unwrap();
 
-        let _incoming = client.read_next().await;
+        let incoming = client.read_next().await;
+
+        dbg!(&incoming);
     });
 }
