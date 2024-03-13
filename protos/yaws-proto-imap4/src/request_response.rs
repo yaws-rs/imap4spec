@@ -10,8 +10,15 @@ use crate::state::IMAP4rev2State;
 use logos::Logos;
 
 #[derive(Debug)]
+pub enum ResponseStatus {
+    Bad,
+    Ok,
+}
+
+#[derive(Debug)]
 pub struct Response<'a> {
     pub id: Option<&'a str>,
+    pub status: Option<ResponseStatus>,
     pub raw: Option<&'a str>,
 }
 
@@ -25,6 +32,7 @@ pub struct Request<'a> {
 pub enum ScanResponseError<'a> {
     InvalidUtf8,
     InvalidResponseFirst(&'a str),
+    InvalidResponseSecond(&'a str),
 }
 
 impl core::fmt::Display for ScanResponseError<'_> {
@@ -32,24 +40,30 @@ impl core::fmt::Display for ScanResponseError<'_> {
         match self {
             Self::InvalidUtf8 => write!(f, "Invalid UTF-8 in Response"),
             Self::InvalidResponseFirst(s) => write!(f, "Invalid Response first Part: {}", s),
+            Self::InvalidResponseSecond(s) => write!(f, "Invalid Response second Part: {}", s),
         }
     }
 }
 
 #[derive(Logos, Debug, PartialEq)]
 enum ResponseToken {
-    #[token(r"\s")]
-    Space,
-    #[token(r"\+")]
-    Plus,
-    #[token(r"\*")]
-    Star,
-    #[token("[A-Za-z0-9]+")]
-    Tag,
-    #[token("BAD")]
-    Bad,
-    #[token("OK")]
-    Ok,
+    #[regex("[A-Za-z0-9]+")]
+    AlphaNums,
+    #[token("* BAD")]
+    ResponseBad,
+    #[token("* OK")]
+    ResponseOk,
+    #[token("* NO")]
+    ResponseNo,
+}
+
+#[derive(Logos, Debug, PartialEq)]
+enum ResponseTextToken {
+    // TODO: cfg_attr strict <CR><LF> ?
+    #[regex(r"\r*\n")]
+    CRLF,
+    #[regex(r"\s[^\r]+")]
+    DATA,
 }
 
 impl<'a> Response<'a> {
@@ -64,9 +78,21 @@ impl<'a> Response<'a> {
         
         let mut lex = ResponseToken::lexer(checked_str); 
 
-        let first = match lex.next() {
+        let mut response = Self { id: None, status: None, raw: Some(checked_str) };
+        
+        response.status = match lex.next() {
             //Some(first) => println!(first),
-            _ => return Err(ScanResponseError::InvalidResponseFirst(checked_str)),
+            // Star completes Response
+            //Some(Ok(ResponseToken::Star)) => {
+                
+                //response.status = match lex.next() {
+                    Some(Ok(ResponseToken::ResponseOk)) => Some(ResponseStatus::Ok),
+                    Some(Ok(ResponseToken::ResponseBad)) => Some(ResponseStatus::Bad),
+                    _ => return Err(ScanResponseError::InvalidResponseSecond(lex.slice())),
+                //};
+
+            //},
+            //_ => return Err(ScanResponseError::InvalidResponseFirst(checked_str)),
         };
         
         let aa = match ctx.rfc_state {
@@ -77,7 +103,7 @@ impl<'a> Response<'a> {
             IMAP4rev2State::Idle => {}
         };
         
-        Ok( Self { id: None, raw: None } )
+        Ok( response )
     }
 }
 
