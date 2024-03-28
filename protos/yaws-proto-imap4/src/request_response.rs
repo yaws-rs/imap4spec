@@ -71,30 +71,34 @@ impl<'a> Response<'a> {
         ctx: &mut IMAP4rev2Context,
         s: &'a [u8],
     ) -> Result<Self, ScanResponseError<'a>> {
-        
         // TODO: re-impl trait logos codegengen || UTF-8 in-buf at I/O layer ?
         // TODO: check other lexers / parsers out + bench
-        let checked_str: &'a str = core::str::from_utf8(s).map_err(|_| ScanResponseError::InvalidUtf8)?;
-        
-        let mut lex = ResponseToken::lexer(checked_str); 
+        let checked_str: &'a str =
+            core::str::from_utf8(s).map_err(|_| ScanResponseError::InvalidUtf8)?;
 
-        let mut response = Self { id: None, status: None, raw: Some(checked_str) };
-        
+        let mut lex = ResponseToken::lexer(checked_str);
+
+        let mut response = Self {
+            id: None,
+            status: None,
+            raw: Some(checked_str),
+        };
+
         response.status = match lex.next() {
             //Some(first) => println!(first),
             // Star completes Response
             //Some(Ok(ResponseToken::Star)) => {
-                
-                //response.status = match lex.next() {
-                    Some(Ok(ResponseToken::ResponseOk)) => Some(ResponseStatus::Ok),
-                    Some(Ok(ResponseToken::ResponseBad)) => Some(ResponseStatus::Bad),
-                    _ => return Err(ScanResponseError::InvalidResponseSecond(lex.slice())),
-                //};
+
+            //response.status = match lex.next() {
+            Some(Ok(ResponseToken::ResponseOk)) => Some(ResponseStatus::Ok),
+            Some(Ok(ResponseToken::ResponseBad)) => Some(ResponseStatus::Bad),
+            _ => return Err(ScanResponseError::InvalidResponseSecond(lex.slice())),
+            //};
 
             //},
             //_ => return Err(ScanResponseError::InvalidResponseFirst(checked_str)),
         };
-        
+
         let aa = match ctx.rfc_state {
             IMAP4rev2State::NotAuthenticated => {}
             IMAP4rev2State::Authenticated => {}
@@ -102,8 +106,8 @@ impl<'a> Response<'a> {
             IMAP4rev2State::Logout => {}
             IMAP4rev2State::Idle => {}
         };
-        
-        Ok( response )
+
+        Ok(response)
     }
 }
 

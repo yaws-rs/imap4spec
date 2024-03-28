@@ -8,5 +8,9 @@ edition = "2021"
 [dependencies]
 yaws-proto-imap4 = { version = "0.1", path = "../../protos/yaws-proto-imap4" }
 tokio-uring = { version = "0.4" }
+# TODO: choose diff TLS
+rustls = { version = "0.23" }
+bytes = { version = "1" }
 
 [features]
+default = []

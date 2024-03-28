@@ -1,6 +1,3 @@
 pub struct Capability {}
 
-
-impl Capability {
-
-}
+impl Capability {}
