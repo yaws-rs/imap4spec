@@ -37,6 +37,7 @@ pub enum IMAP4rev2ClientError {
     TlsConnectionError(String),
     NotTlsConnection,
     TlsWriteLock,
+    Login(String),
 //    TlsUnbuffered(String),
 }
 
@@ -124,16 +125,38 @@ impl<'a> IMAP4rev2Client<'a> {
             None => return Err(IMAP4rev2ClientError::NotTlsConnection),
         };
 
-        let plaintext_out = self.codec.try_login(user, pass).map_err(|e| IMAP4rev2ClientError::Codec(e.to_string()))?;
+        //let plaintext_out = self.codec.try_login(user, pass).map_err(|e| IMAP4rev2ClientError::Codec(e.to_string()))?;
+
+        let plaintext_out = format!("A0001 LOGIN {} {}\r\n", user, pass);
         
         let mut spinner = TlsSpinner::new();
-        spinner.
-        
-        
-        match spinner.go(WantFromTlsSpinner::Write, &mut self.io_client, Arc::clone(&tls.rustls_unbuffered_connection)).await {
+        spinner.add_to_encrypt(plaintext_out.as_bytes());
+
+        match spinner.spin(WantFromTlsSpinner::Write, &mut self.io_client, Arc::clone(&tls.rustls_unbuffered_connection)).await {
+            Err(TlsSpinnerError::WrittenCompleted(c)) => {
+                println!("Wrote {} bytes supposedly ?", c);
+            },
             _ => todo!(),
         }
 
+        loop {
+
+            println!("Reading ..");
+            let read_in = self.io_client.read_next().await.map_err(|e| IMAP4rev2ClientError::Login(e.to_string()))?;
+
+            println!("Cleartext in {} bytes", read_in);
+            
+            if read_in > 0 {
+                match spinner.spin(WantFromTlsSpinner::Read, &mut self.io_client, Arc::clone(&tls.rustls_unbuffered_connection)).await {
+                    Err(e) => println!("WTF err {:?}", e),
+                    _ => todo!(),
+                }
+            }
+
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+
+        
         todo!();
     }
     pub async fn read_next_tls(
@@ -147,7 +170,7 @@ impl<'a> IMAP4rev2Client<'a> {
 
         let mut spinner = TlsSpinner::new();
         
-        match spinner.go(WantFromTlsSpinner::Read, &mut self.io_client, Arc::clone(&tls.rustls_unbuffered_connection)).await {
+        match spinner.spin(WantFromTlsSpinner::Read, &mut self.io_client, Arc::clone(&tls.rustls_unbuffered_connection)).await {
             Err(TlsSpinnerError::NothingToRead) => Ok(None),
             _ => todo!(),
         }

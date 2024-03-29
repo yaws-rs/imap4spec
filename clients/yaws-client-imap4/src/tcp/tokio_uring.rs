@@ -13,6 +13,7 @@ pub enum ClientError {
     BugTooBigRead,
     Read(String),
     Write(String),
+    Closed,
 }
 
 impl core::fmt::Display for ClientError {
@@ -22,6 +23,7 @@ impl core::fmt::Display for ClientError {
             Self::BugTooBigRead => write!(f, "Bug - Read Too Big Buffer ?!"),
             Self::Read(s) => write!(f, "Error - Socket Read: {}", s),
             Self::Write(s) => write!(f, "Error - Socket Write: {}", s),
+            Self::Closed => write!(f, "Error - Socket Closed"),
         }
     }
 }
@@ -29,7 +31,8 @@ impl core::fmt::Display for ClientError {
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 
 pub struct Client {
-    pub(crate) buf_in: Vec<u8>,
+    //pub(crate) buf_in: Vec<u8>,
+    pub(crate) buf_in: BytesMut,    
     //pub(crate) buf_out: Vec<u8>,
     pub(crate) buf_out: BytesMut,
     pub(crate) buf_size_in: usize,
@@ -44,7 +47,7 @@ impl Client {
             .map_err(|e| ClientError::Connect(e.to_string()))?;
 
         Ok(Self {
-            buf_in: vec![],
+            buf_in: BytesMut::new(),
             // TODO: rustls encode() uses len() not capacity()
             buf_out: BytesMut::zeroed(8192),
             client,
@@ -71,23 +74,38 @@ impl Client {
             },
         }
     }
-    pub async fn read_next(&mut self) -> Result<(), ClientError> {
-        let buf_in = vec![0; 8192];
+    pub async fn read_next(&mut self) -> Result<usize, ClientError> {
 
-        let (res, buf) = self.client.read(buf_in).await;
-
-        let n = res.map_err(|e| ClientError::Read(e.to_string()))?;
-
-        // How ?
-        if n >= 8192 {
-            return Err(ClientError::BugTooBigRead);
-        } else {
-            self.buf_size_in = n as usize;
-        }
-
-        (*self).buf_in = buf[..n].to_vec();
-        self.buf_size_in = n;
+        let mut total_read = 0;
         
-        Ok(())
+        loop {
+            let mut buf_in = vec![0; 8192];
+            let (res, buf) = self.client.read(buf_in).await;
+
+            let n = res.map_err(|e| ClientError::Read(e.to_string()))?;
+                
+            // How ?
+            if n >= 8192 {
+                return Err(ClientError::BugTooBigRead);
+            }
+
+            if n == 0 {
+                return Err(ClientError::Closed);
+            }
+
+            total_read += n;
+            
+            self.buf_size_in += n;
+            (*self).buf_in.extend_from_slice(&buf[..n]);
+
+            if n != 8192 {
+                break;
+            }
+            
+
+        }
+            
+        Ok(total_read)
+
     }
 }

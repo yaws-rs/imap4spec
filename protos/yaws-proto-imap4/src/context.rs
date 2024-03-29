@@ -108,13 +108,13 @@ impl<'a> IMAP4rev2Context {
     {
         crate::request_response::Response::scan_with_context(self, input)
     }
-    /// Try to extract next Request within the current Context    
+    /// Try to extract next Request within the current Context
     pub fn try_next_request(
         self: &mut Self,
         input: &'a [u8],
-    ) -> Result<crate::request_response::Request<'a>, crate::request_response::ScanResponseError<'a>>
+    ) -> Result<crate::request_response::Request<'a>, crate::request_response::ScanRequestError<'a>>
     {
-        crate::request_response::Request::scan_with_context(self, input);
+        crate::request_response::Request::scan_with_context(self, input)
     }
 }
 

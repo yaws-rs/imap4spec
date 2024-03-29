@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 yaws-client-imap4 = { version = "0.1", path = "../../clients/yaws-client-imap4" }
-tokio-uring = "0.4"
+tokio-uring = { version = "0.4", features = ["bytes"] }
