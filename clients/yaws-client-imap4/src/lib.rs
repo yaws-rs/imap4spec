@@ -20,14 +20,15 @@ mod tls;
 use std::net::SocketAddr;
 
 pub struct IMAP4rev2Client<'a> {
-    pub(crate) client: tcp::tokio_uring::Client,
+    pub(crate) io_client: tcp::tokio_uring::Client,
     pub(crate) codec: IMAP4rev2Context,
-    pub(crate) tls: Option<TLSClient>,
+    pub(crate) tls: Option<TlsClient>,
     pub(crate) current_response: Option<Response<'a>>,
 }
 
 #[derive(Debug)]
 pub enum IMAP4rev2ClientError {
+    Codec(String),
     Connect(String),
     Read(String),
     Write(String),
@@ -36,21 +37,19 @@ pub enum IMAP4rev2ClientError {
     TlsConnectionError(String),
     NotTlsConnection,
     TlsWriteLock,
-    TlsUnbuffered(String),
+//    TlsUnbuffered(String),
 }
 
 use std::sync::RwLock;
 
-use tls::rustls_codec::TlsContext as ImapTlsContext;
+use tls::rustls_io_uring::{TlsSpinner, TlsSpinnerError};
+use tls::rustls_io_uring::WantFromTlsSpinner;
 
-// TODO: move to tls/rustls_codec
-use rustls::unbuffered::ConnectionState as RustlsConnectionState;
-
-pub(crate) struct TLSClient {
+pub(crate) struct TlsClient {
     pub(crate) rustls_client_config: Arc<rustls::client::ClientConfig>,
     pub(crate) rustls_unbuffered_connection:
-        Arc<RwLock<rustls::client::UnbufferedClientConnection>>,
-    pub(crate) rustls_codec: ImapTlsContext,
+    Arc<RwLock<rustls::client::UnbufferedClientConnection>>,
+    
 }
 
 // TODO: rustls Arc / Alloc in alloc no_std - gate it
@@ -59,13 +58,13 @@ use std::sync::Arc;
 
 impl<'a> IMAP4rev2Client<'a> {
     pub async fn connect(dest_addr: SocketAddr) -> Result<Self, IMAP4rev2ClientError> {
-        let client = tcp::tokio_uring::Client::connect(dest_addr)
+        let io_client = tcp::tokio_uring::Client::connect(dest_addr)
             .await
             .map_err(|e| IMAP4rev2ClientError::Connect(e.to_string()))?;
         let codec = IMAP4rev2Context::new();
 
         Ok(Self {
-            client,
+            io_client,
             codec,
             current_response: None,
             tls: None,
@@ -76,7 +75,7 @@ impl<'a> IMAP4rev2Client<'a> {
         server_name: Option<String>,
     ) -> Result<Self, IMAP4rev2ClientError> {
         let mut myself = Self::connect(dest_addr).await.map_err(|e| e)?;
-        let root_store = rustls::RootCertStore::empty();
+        // let root_store = rustls::RootCertStore::empty();
         // TODO: add root cert
         //  root_store.add(rustls_cert_der).unwrap();
         // TODO: add provider config
@@ -112,118 +111,54 @@ impl<'a> IMAP4rev2Client<'a> {
         )
         .map_err(|e| IMAP4rev2ClientError::TlsConnectionError(e.to_string()))?;
 
-        let rustls_codec = ImapTlsContext::new();
-
-        myself.tls = Some(TLSClient {
+        myself.tls = Some(TlsClient {
             rustls_client_config: arc_client_config,
             rustls_unbuffered_connection: Arc::new(RwLock::new(rustls_unbuffered_connection)),
-            rustls_codec,
         });
 
         Ok(myself)
     }
-    pub async fn read_next_tls(
-        &'a mut self,
-    ) -> Result<Option<&Response<'a>>, IMAP4rev2ClientError> {
-        let tls_conn_arc = match &mut self.tls {
-            Some(tls_conn) => &tls_conn.rustls_unbuffered_connection,
+    pub async fn login_tls(&'a mut self, user: &str, pass: &str) -> Result<&Response<'a>, IMAP4rev2ClientError> {
+        let tls = match &mut self.tls {
+            Some(tls_conn) => tls_conn,
             None => return Err(IMAP4rev2ClientError::NotTlsConnection),
         };
 
-        println!(".. pre-write-lock status ?");
-
-        let mut tls_conn = tls_conn_arc
-            .deref()
-            .write()
-            .map_err(|e| IMAP4rev2ClientError::TlsWriteLock)?;
-
-        println!(".. buff status ?");
-
-        //let mut buf_in = &mut self.client.buf_in;
-        //let mut buf_out = &mut self.client.buf_out;
-
-        loop {
-            let mut io_client = &mut self.client;
-
-            let rustls::unbuffered::UnbufferedStatus { mut discard, state } =
-                tls_conn.process_tls_records(&mut io_client.buf_in);
-
-            let state = match state {
-                Ok(s) => s,
-                Err(e) => return Err(IMAP4rev2ClientError::TlsUnbuffered(e.to_string())),
-            };
-
-            dbg!(&state);
-
-            println!(".. pre-read status ?");
-
-            //let tls_codec = self.tls.expect("BUG-Unchecked: No TLS?").rustls_codec;
-
-            // TODO: Move this to the codec.
-
-            //dbg!(&buf_out.len());
-
-            match state {
-                RustlsConnectionState::ReadTraffic(mut s) => {
-                    todo!();
-                }
-                RustlsConnectionState::Closed => {
-                    todo!();
-                }
-                RustlsConnectionState::ReadEarlyData(mut s) => {
-                    todo!();
-                }
-                RustlsConnectionState::EncodeTlsData(mut s) => {
-                    match s.encode(&mut io_client.buf_out) {
-                        Ok(out_len) => {
-                            io_client.write_all().await.unwrap();
-                        }
-                        Err(e) => panic!("EncodeTLsData PANIC {:}", e),
-                    }
-                    //dbg!(encode_out);
-                }
-                RustlsConnectionState::TransmitTlsData(mut s) => {
-                    if let Some(mut may_encrypt) = s.may_encrypt_app_data() {}
-                    io_client.write_all().await.unwrap();
-                    s.done();
-                }
-                RustlsConnectionState::BlockedHandshake => {
-                    todo!();
-                }
-                RustlsConnectionState::WriteTraffic(mut s) => {
-                    todo!();
-                }
-                // Rustls has non-exhaustive states :E
-                _ => todo!(),
-            }
+        let plaintext_out = self.codec.try_login(user, pass).map_err(|e| IMAP4rev2ClientError::Codec(e.to_string()))?;
+        
+        let mut spinner = TlsSpinner::new();
+        spinner.
+        
+        
+        match spinner.go(WantFromTlsSpinner::Write, &mut self.io_client, Arc::clone(&tls.rustls_unbuffered_connection)).await {
+            _ => todo!(),
         }
 
-        self.client
-            .read_next()
-            .await
-            .map_err(|e| IMAP4rev2ClientError::Read(e.to_string()))?;
-        let buf_size_usize = self.client.buf_size_in as usize;
+        todo!();
+    }
+    pub async fn read_next_tls(
+        &'a mut self,
+    ) -> Result<Option<&Response<'a>>, IMAP4rev2ClientError> {
 
-        /*
+        let tls = match &mut self.tls {
+            Some(tls_conn) => tls_conn,
+            None => return Err(IMAP4rev2ClientError::NotTlsConnection),
+        };
 
-        let buf_decode = &buf_in[..buf_size_usize];
-
-        let response = self.codec.try_next_response(&buf_decode).map_err(|e| IMAP4rev2ClientError::ReadNext(e.to_string()))?;
-
-        self.current_response = Some(response);
-
-        Ok(self.current_response.as_ref().expect("Bug"))
-         */
-
-        todo!()
+        let mut spinner = TlsSpinner::new();
+        
+        match spinner.go(WantFromTlsSpinner::Read, &mut self.io_client, Arc::clone(&tls.rustls_unbuffered_connection)).await {
+            Err(TlsSpinnerError::NothingToRead) => Ok(None),
+            _ => todo!(),
+        }
     }
     pub async fn read_next(&'a mut self) -> Result<&Response<'a>, IMAP4rev2ClientError> {
-        self.client
+        self.io_client
             .read_next()
             .await
             .map_err(|e| IMAP4rev2ClientError::Read(e.to_string()))?;
-        let buf_size_usize = self.client.buf_size_in as usize;
-        let buf_in = &self.client.buf_in;
+        let buf_size_usize = self.io_client.buf_size_in as usize;
+        let buf_in = &self.io_client.buf_in;
         let buf_decode = &buf_in[..buf_size_usize];
 
         let response = self

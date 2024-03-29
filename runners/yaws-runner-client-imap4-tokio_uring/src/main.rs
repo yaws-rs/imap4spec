@@ -12,9 +12,11 @@ fn main() {
         .await
         .unwrap();
 
-        client.read_next_tls().await;
+        //client.read_next_tls().await.unwrap();
+        //println!("whoop");
 
-        println!("whoop");
+        client.login_tls("a", "b").await.unwrap();
+            
         //let incoming = client.read_next().await;
         //dbg!(&incoming);
 

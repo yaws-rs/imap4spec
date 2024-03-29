@@ -11,6 +11,7 @@ tokio-uring = { version = "0.4" }
 # TODO: choose diff TLS
 rustls = { version = "0.23" }
 bytes = { version = "1" }
+hex = { version = "0.4" }
 
 [features]
 default = []

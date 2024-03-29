@@ -107,6 +107,12 @@ impl<'a> Response<'a> {
             IMAP4rev2State::Idle => {}
         };
 
+        let mut response = Self {
+            id: None,
+            status: None,            
+            raw: Some(checked_str),
+        };
+        
         Ok(response)
     }
 }
@@ -114,7 +120,11 @@ impl<'a> Response<'a> {
 pub enum ScanRequestError {}
 
 impl Request<'_> {
-    pub fn scan_with_context(ctx: &mut IMAP4rev2Context, s: &[u8]) -> Result<(), ScanRequestError> {
+    pub fn scan_with_context(ctx: &mut IMAP4rev2Context, s: &[u8]) -> Result<Self, ScanRequestError> {
+
+        let checked_str: &'a str =
+            core::str::from_utf8(s).map_err(|_| ScanResponseError::InvalidUtf8)?;
+        
         match ctx.rfc_state {
             IMAP4rev2State::NotAuthenticated => {}
             IMAP4rev2State::Authenticated => {}
@@ -122,6 +132,13 @@ impl Request<'_> {
             IMAP4rev2State::Logout => {}
             IMAP4rev2State::Idle => {}
         }
-        Ok(())
+
+        let mut request = Self {
+            id: None,
+            status: None,
+            raw: Some(checked_str),
+        };
+        
+        Ok(request)
     }
 }

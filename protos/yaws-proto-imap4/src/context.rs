@@ -112,10 +112,9 @@ impl<'a> IMAP4rev2Context {
     pub fn try_next_request(
         self: &mut Self,
         input: &'a [u8],
-    ) -> Result<crate::request_response::Response<'a>, crate::request_response::ScanResponseError<'a>>
+    ) -> Result<crate::request_response::Request<'a>, crate::request_response::ScanResponseError<'a>>
     {
-        //        crate::request_response::Request::scan_with_context(self, input);
-        todo!()
+        crate::request_response::Request::scan_with_context(self, input);
     }
 }
 
